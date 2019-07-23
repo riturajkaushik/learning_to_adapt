@@ -3,10 +3,20 @@ from learning_to_adapt.trainers.mb_trainer import Trainer
 from learning_to_adapt.policies.mpc_controller import MPCController
 from learning_to_adapt.samplers.sampler import Sampler
 from learning_to_adapt.logger import logger
-from learning_to_adapt.envs.normalized_env import normalize
 from learning_to_adapt.utils.utils import ClassEncoder
 from learning_to_adapt.samplers.model_sample_processor import ModelSampleProcessor
-from learning_to_adapt.envs import *
+try:
+    from learning_to_adapt.envs.normalized_env import normalize
+    from learning_to_adapt.envs import *
+except:
+    print("Unable to load mujoco based environments")
+try:
+    from learning_to_adapt.bullet_envs.normalized_env import normalize
+    from learning_to_adapt.bullet_envs import *
+    print("Bullet environments imported")
+except:
+    print("Unable to load bullet based environments")
+
 import json
 import os
 
@@ -73,7 +83,7 @@ if __name__ == '__main__':
 
     config = {
                 # Environment
-                'env': HalfCheetahEnv,
+                'env': HexapodEnv,
                 'max_path_length': 1000,
                 'task': None,
                 'normalize': True,
