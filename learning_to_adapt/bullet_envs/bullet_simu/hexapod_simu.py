@@ -11,11 +11,12 @@ import time
 import numpy as np
 import math
 base_path = this_file_path
+import copy
 
 class Hexapod_env:
     "Hexapod environment"
     def __init__(self, gui, controlStep=0.1, simStep = 0.015, controller=None, jointControlMode = "position", visualizationSpeed = 1.0, boturdf= base_path + "/URDF/pexod.urdf", floorurdf= base_path + "/URDF/plane.urdf", lateral_friction=10.0):
-        self.p = pybullet
+        # pybullet = pybullet
         self.__vspeed = visualizationSpeed 
         self.__init_state= [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0, 0.0] #position and orientation
         self.__simStep = simStep
@@ -26,36 +27,51 @@ class Hexapod_env:
         self.jointControlMode = jointControlMode #either "position" or "velocity"
         self.__base_collision = False
         self.__heightExceed = False
+        self.gui = gui
+        self.boturdf = boturdf
+        self.floorurdf = floorurdf
+        self.lateral_friction = lateral_friction
 
         if gui:
-            self.physicsClient = self.p.connect(self.p.GUI)
+            self.physicsClient = pybullet.connect(pybullet.GUI)
+            print("New GUI Client: ", self.physicsClient)
         else:
-            self.physicsClient = self.p.connect(self.p.DIRECT)
+            self.physicsClient = pybullet.connect(pybullet.DIRECT)
+            print("New DIRECT Client: ", self.physicsClient)
         
-        self.p.resetSimulation(physicsClientId=self.physicsClient)
-        self.p.setTimeStep(self.__simStep, physicsClientId=self.physicsClient)
-        self.p.resetDebugVisualizerCamera(1.5, 50, -35.0, [0,0,0], physicsClientId=self.physicsClient)
-        self.p.setAdditionalSearchPath(pybullet_data.getDataPath(), physicsClientId=self.physicsClient)  
-        self.p.setGravity(0,0,-10.0, physicsClientId=self.physicsClient) 
+        pybullet.resetSimulation(physicsClientId=self.physicsClient)
+        pybullet.setTimeStep(self.__simStep, physicsClientId=self.physicsClient)
+        pybullet.resetDebugVisualizerCamera(1.5, 50, -35.0, [0,0,0], physicsClientId=self.physicsClient)
+        pybullet.setAdditionalSearchPath(pybullet_data.getDataPath(), physicsClientId=self.physicsClient)  
+        pybullet.setGravity(0,0,-10.0, physicsClientId=self.physicsClient) 
         
-        self.__planeId = self.p.loadURDF(floorurdf, [0,0,0], self.p.getQuaternionFromEuler([0,0,0]), physicsClientId=self.physicsClient)
+        self.__planeId = pybullet.loadURDF(floorurdf, [0,0,0], pybullet.getQuaternionFromEuler([0,0,0]), physicsClientId=self.physicsClient)
         self.hexapodStartPos = [0,0,0.2] # Start at collision free state. Otherwise results becomes a bit random
-        self.hexapodStartOrientation = self.p.getQuaternionFromEuler([0,0,0]) 
-        flags= self.p.URDF_USE_INERTIA_FROM_FILE or self.p.URDF_USE_SELF_COLLISION or self.p.URDF_USE_SELF_COLLISION_INCLUDE_PARENT
-        self.__hexapodId = self.p.loadURDF(boturdf,self.hexapodStartPos, self.hexapodStartOrientation, useFixedBase=0, flags=flags, physicsClientId=self.physicsClient) 
+        self.hexapodStartOrientation = pybullet.getQuaternionFromEuler([0,0,0]) 
+        flags= pybullet.URDF_USE_INERTIA_FROM_FILE or pybullet.URDF_USE_SELF_COLLISION or pybullet.URDF_USE_SELF_COLLISION_INCLUDE_PARENT
+        self.__hexapodId = pybullet.loadURDF(boturdf,self.hexapodStartPos, self.hexapodStartOrientation, useFixedBase=0, flags=flags, physicsClientId=self.physicsClient) 
 
         self.joint_list = self._make_joint_list(self.__hexapodId)
         self.goal_position = []
         self.goalBodyID = None
-        self.visualGoalShapeId = self.p.createVisualShape(shapeType=self.p.GEOM_CYLINDER, radius=0.2, length=0.04, visualFramePosition=[0.,0.,0.], visualFrameOrientation=self.p.getQuaternionFromEuler([0,0,0]) , rgbaColor=[0.0,0.0, 0.0, 0.5], specularColor=[0.5,0.5, 0.5, 1.0], physicsClientId=self.physicsClient)    
+        self.visualGoalShapeId = pybullet.createVisualShape(shapeType=pybullet.GEOM_CYLINDER, radius=0.2, length=0.04, visualFramePosition=[0.,0.,0.], visualFrameOrientation=pybullet.getQuaternionFromEuler([0,0,0]) , rgbaColor=[0.0,0.0, 0.0, 0.5], specularColor=[0.5,0.5, 0.5, 1.0], physicsClientId=self.physicsClient)    
 
-        self.p.changeDynamics(self.__planeId, linkIndex=-1, lateralFriction=lateral_friction, physicsClientId=self.physicsClient)
+        pybullet.changeDynamics(self.__planeId, linkIndex=-1, lateralFriction=lateral_friction, physicsClientId=self.physicsClient)
+
+    def init(self):
+        '''
+        Re-inititialization is required after every deep copy of the environement
+        This is a hack so that pybullet assigns a seperate physics client for every deep copy.
+        Without reinitialization, every deep copied environement will share the same reference of the physics client.
+        Thus all enviroments will share the same states. 
+        '''
+        self.__init__(self.gui, controller=self.__controller, jointControlMode = self.jointControlMode, visualizationSpeed = self.__vspeed, boturdf= self.boturdf, floorurdf= self.floorurdf, lateral_friction=self.lateral_friction)
 
     def setFriction(self, lateral_friction):
-        self.p.changeDynamics(self.__planeId, linkIndex=-1, lateralFriction=lateral_friction, physicsClientId=self.physicsClient)
+        pybullet.changeDynamics(self.__planeId, linkIndex=-1, lateralFriction=lateral_friction, physicsClientId=self.physicsClient)
         
     def get_simulator(self):
-        return self.p, self.physicsClient
+        return pybullet, self.physicsClient
 
     def _make_joint_list(self, botId):
         joint_names = [b'body_leg_0', b'leg_0_1_2', b'leg_0_2_3',
@@ -67,8 +83,8 @@ class Hexapod_env:
         ]
         joint_list = []
         for n in joint_names:
-            for joint in range (self.p.getNumJoints(botId, physicsClientId=self.physicsClient)):
-                name = self.p.getJointInfo(botId, joint, physicsClientId=self.physicsClient)[1]
+            for joint in range (pybullet.getNumJoints(botId, physicsClientId=self.physicsClient)):
+                name = pybullet.getJointInfo(botId, joint, physicsClientId=self.physicsClient)[1]
                 if name == n:
                     joint_list += [joint]
         return joint_list
@@ -77,8 +93,8 @@ class Hexapod_env:
         
         if (not goal_position == []) and (not self.goal_position == goal_position):             
             # if self.goalBodyID is not None:
-            #     self.p.removeBody(self.goalBodyID, physicsClientId=self.physicsClient)
-            self.goalBodyID = self.p.createMultiBody(baseMass=0.0,baseInertialFramePosition=[0,0,0], baseVisualShapeIndex = self.visualGoalShapeId, basePosition = goal_position, useMaximalCoordinates=True, physicsClientId=self.physicsClient)
+            #     pybullet.removeBody(self.goalBodyID, physicsClientId=self.physicsClient)
+            self.goalBodyID = pybullet.createMultiBody(baseMass=0.0,baseInertialFramePosition=[0,0,0], baseVisualShapeIndex = self.visualGoalShapeId, basePosition = goal_position, useMaximalCoordinates=True, physicsClientId=self.physicsClient)
             # print ("Goal information: ", self.goalBodyID)
         self.__base_collision = False
         self.__heightExceed = False
@@ -105,8 +121,8 @@ class Hexapod_env:
                 controlStep += 1
             
             self.set_commands(self.__command)
-            self.p.stepSimulation(physicsClientId=self.physicsClient) 
-            if self.p.getConnectionInfo(self.physicsClient)['connectionMethod'] == self.p.GUI:
+            pybullet.stepSimulation(physicsClientId=self.physicsClient) 
+            if pybullet.getConnectionInfo(self.physicsClient)['connectionMethod'] == pybullet.GUI:
                 time.sleep(self.__simStep/float(self.__vspeed)) 
             
             # Flipfing behavior
@@ -114,7 +130,7 @@ class Hexapod_env:
                 self.flip=True
             
             #Base floor collision
-            if len(self.p.getContactPoints(self.__planeId, self.__hexapodId, -1, -1, physicsClientId=self.physicsClient)) > 0:
+            if len(pybullet.getContactPoints(self.__planeId, self.__hexapodId, -1, -1, physicsClientId=self.physicsClient)) > 0:
                 self.__base_collision=True
             
             #Jumping behavior when CM crosses 2.2
@@ -147,7 +163,7 @@ class Hexapod_env:
         assert commands.size == len(self.joint_list), "Command length doesn't match with controllable joints"
         counter = 0
         for joint in self.joint_list:
-            info = self.p.getJointInfo(self.__hexapodId, joint, physicsClientId=self.physicsClient)
+            info = pybullet.getJointInfo(self.__hexapodId, joint, physicsClientId=self.physicsClient)
             lower_limit = info[8]
             upper_limit = info[9]
             max_force = info[10]
@@ -155,18 +171,18 @@ class Hexapod_env:
             pos = min(max(lower_limit, commands[counter]), upper_limit)
             
             if self.jointControlMode == "position":
-                self.p.setJointMotorControl2(bodyUniqueId=self.__hexapodId, jointIndex=joint, 
-                controlMode=self.p.POSITION_CONTROL, 
+                pybullet.setJointMotorControl2(bodyUniqueId=self.__hexapodId, jointIndex=joint, 
+                controlMode=pybullet.POSITION_CONTROL, 
                 targetPosition = commands[counter], 
                 force=max_force, 
                 maxVelocity=max_velocity, 
                 physicsClientId=self.physicsClient)
 
             elif self.jointControlMode == "velocity":
-                current_joint_pos = self.p.getJointState(bodyUniqueId=self.__hexapodId, jointIndex=joint,physicsClientId=self.physicsClient)[0]
+                current_joint_pos = pybullet.getJointState(bodyUniqueId=self.__hexapodId, jointIndex=joint,physicsClientId=self.physicsClient)[0]
                 err = pos - current_joint_pos
-                self.p.setJointMotorControl2(bodyUniqueId=self.__hexapodId, jointIndex=joint, 
-                    controlMode=self.p.VELOCITY_CONTROL, 
+                pybullet.setJointMotorControl2(bodyUniqueId=self.__hexapodId, jointIndex=joint, 
+                    controlMode=pybullet.VELOCITY_CONTROL, 
                     # velocity must be limited as it it not done automatically
                     # max_force is however considered here
                     targetVelocity = np.clip(err * (1.0/ (math.pi * self.__controlStep)), -max_velocity, max_velocity),
@@ -177,9 +193,9 @@ class Hexapod_env:
     def getState(self):
         '''
         Returns the position list of 3 floats and orientation as list of 4 floats in [x,y,z,w] order.
-        Use self.p.getEulerFromQuaternion to convert the quaternion to Euler if needed.
+        Use pybullet.getEulerFromQuaternion to convert the quaternion to Euler if needed.
         '''
-        states = self.p.getBasePositionAndOrientation(self.__hexapodId, physicsClientId=self.physicsClient)
+        states = pybullet.getBasePositionAndOrientation(self.__hexapodId, physicsClientId=self.physicsClient)
         pos = list(states[0])
         orient = list(states[1])
         return pos + orient
@@ -189,20 +205,20 @@ class Hexapod_env:
         Returns z component of up vector of the robot
         It is negative if the robot is flipped.
         '''
-        states = self.p.getBasePositionAndOrientation(self.__hexapodId, physicsClientId=self.physicsClient)
-        z_componentOfUp = self.p.getMatrixFromQuaternion(list(states[1]))[-1]
+        states = pybullet.getBasePositionAndOrientation(self.__hexapodId, physicsClientId=self.physicsClient)
+        z_componentOfUp = pybullet.getMatrixFromQuaternion(list(states[1]))[-1]
         return z_componentOfUp
     
     def getRotation(self):
         '''
         Returns rotation matrix
         '''
-        states = self.p.getBasePositionAndOrientation(self.__hexapodId, physicsClientId=self.physicsClient)
-        return self.p.getMatrixFromQuaternion(list(states[1]))
+        states = pybullet.getBasePositionAndOrientation(self.__hexapodId, physicsClientId=self.physicsClient)
+        return pybullet.getMatrixFromQuaternion(list(states[1]))
     
     def getEulerAngles(self):
-        states = self.p.getBasePositionAndOrientation(self.__hexapodId, physicsClientId=self.physicsClient)
-        euler_angles = self.p.getEulerFromQuaternion(list(states[1])) # x,y,z rotation
+        states = pybullet.getBasePositionAndOrientation(self.__hexapodId, physicsClientId=self.physicsClient)
+        euler_angles = pybullet.getEulerFromQuaternion(list(states[1])) # x,y,z rotation
         return np.rad2deg(euler_angles)
     
     def flipped(self):
@@ -212,19 +228,19 @@ class Hexapod_env:
         '''
         orinetation must be in quarternion
         ''' 
-        for i in range(self.p.getNumJoints(self.__hexapodId, physicsClientId=self.physicsClient)):
-            self.p.resetJointState(self.__hexapodId, i, 0.0, 0.0, physicsClientId=self.physicsClient)
+        for i in range(pybullet.getNumJoints(self.__hexapodId, physicsClientId=self.physicsClient)):
+            pybullet.resetJointState(self.__hexapodId, i, 0.0, 0.0, physicsClientId=self.physicsClient)
         
         pos = startPosition if startPosition is not None else self.hexapodStartPos
         orient = startOrientation if startOrientation is not None else self.hexapodStartOrientation
-        self.p.resetBasePositionAndOrientation(self.__hexapodId, pos, orient, physicsClientId=self.physicsClient)
+        pybullet.resetBasePositionAndOrientation(self.__hexapodId, pos, orient, physicsClientId=self.physicsClient)
         
         self.__states = [] 
         self.__rotations = []
         self.__commands = [] 
 
     def disconnet(self):
-        self.p.disconnect(physicsClientId=self.physicsClient)
+        pybullet.disconnect(physicsClientId=self.physicsClient)
 
     def setController(self, controller):
         self.__controller = controller
