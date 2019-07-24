@@ -3,7 +3,7 @@ from learning_to_adapt.utils.serializable import Serializable
 from learning_to_adapt.envs.mujoco_env import MujocoEnv
 from learning_to_adapt.logger import logger
 import os
-
+import copy
 
 class HalfCheetahHFieldEnv(MujocoEnv, Serializable):
     def __init__(self, task='hfield', reset_every_episode=False, reward=True, *args, **kwargs):
@@ -175,7 +175,9 @@ class HalfCheetahHFieldEnv(MujocoEnv, Serializable):
         logger.logkv(prefix + 'MinForwardProgress', np.min(progs))
         logger.logkv(prefix + 'StdForwardProgress', np.std(progs))
 
-
+    def clone(self):
+        return copy.deepcopy(self)
+        
 if __name__ == '__main__':
     env = HalfCheetahHFieldEnv(task='hfield')
     while True:

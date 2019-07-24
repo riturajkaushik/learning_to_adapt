@@ -3,7 +3,7 @@ from learning_to_adapt.utils.serializable import Serializable
 from learning_to_adapt.envs.mujoco_env import MujocoEnv
 from learning_to_adapt.logger import logger
 import os
-
+import copy
 
 class AntEnv(MujocoEnv,  Serializable):
 
@@ -196,7 +196,9 @@ class AntEnv(MujocoEnv,  Serializable):
         logger.logkv(prefix + 'MaxForwardProgress', np.max(progs))
         logger.logkv(prefix + 'MinForwardProgress', np.min(progs))
         logger.logkv(prefix + 'StdForwardProgress', np.std(progs))
-
+    
+    def clone(self):
+        return copy.deepcopy(self)
 
 if __name__ == '__main__':
     env = AntEnv(task='cripple')

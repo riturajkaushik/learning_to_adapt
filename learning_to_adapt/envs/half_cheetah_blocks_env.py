@@ -3,7 +3,7 @@ from learning_to_adapt.utils.serializable import Serializable
 from learning_to_adapt.envs.mujoco_env import MujocoEnv
 from learning_to_adapt.logger import logger
 import os
-
+import copy
 
 class HalfCheetahBlocksEnv(MujocoEnv, Serializable):
 
@@ -92,7 +92,9 @@ class HalfCheetahBlocksEnv(MujocoEnv, Serializable):
         logger.logkv('MaxForwardProgress', np.max(progs))
         logger.logkv('MinForwardProgress', np.min(progs))
         logger.logkv('StdForwardProgress', np.std(progs))
-
+    
+    def clone(self):
+        return copy.deepcopy(self)
 
 if __name__ == '__main__':
     env = HalfCheetahBlocksEnv(task='damping')
