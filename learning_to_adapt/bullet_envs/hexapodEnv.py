@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from gym import error, spaces, utils
 from gym.utils import seeding
-# from simu.hexapod_simu import Hexapod_env 
+import copy
 from  learning_to_adapt.bullet_envs.bullet_simu.hexapod_simu import Hexapod_env, HexaController 
 
 class HexapodEnv(gym.Env): 
