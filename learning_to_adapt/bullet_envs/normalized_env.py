@@ -1,6 +1,7 @@
 import numpy as np
 from learning_to_adapt.utils.serializable import Serializable
 from gym.spaces import Box
+import copy
 # from rand_param_envs.gym.spaces import Box as OldBox
 
 """
@@ -139,5 +140,11 @@ class NormalizedEnv(Serializable):
             reward = self._apply_normalize_reward(reward)
         return next_obs, reward * self._scale_reward, done, info
 
-
+    def clone(self):
+        # First clone the base environment
+        # This is required since deepcopies might have reference to the same physics simulator (e.g pybullet)
+        self._wrapped_env = self._wrapped_env.clone()
+        # Now since the environment is safely cloned
+        # simply deepcopy everything 
+        return copy.deepcopy(self) 
 normalize = NormalizedEnv
