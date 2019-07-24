@@ -13,7 +13,8 @@ class IterativeEnvExecutor(object):
 
     def __init__(self, env, num_rollouts, max_path_length):
         self._num_envs = num_rollouts
-        self.envs = np.asarray([copy.deepcopy(env) for _ in range(self._num_envs)])
+        # self.envs = np.asarray([copy.deepcopy(env) for _ in range(self._num_envs)])
+        self.envs = np.asarray([env.clone() for _ in range(self._num_envs)])
         self.ts = np.zeros(len(self.envs), dtype='int')  # time steps
         self.max_path_length = max_path_length
 
