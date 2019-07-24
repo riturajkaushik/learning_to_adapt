@@ -3,6 +3,7 @@ import os.path as osp
 from learning_to_adapt import spaces
 from learning_to_adapt.envs.base import Env
 from learning_to_adapt.mujoco_py import MjModel, MjViewer
+import copy
 
 MODEL_DIR = osp.abspath(
     osp.join(
@@ -248,3 +249,6 @@ class MujocoEnv(Env):
 
     def set_param_values(self, values):
         pass
+    
+    def clone(self):
+        return copy.deepcopy(self)
