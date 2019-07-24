@@ -8,6 +8,7 @@ from learning_to_adapt.samplers.model_sample_processor import ModelSampleProcess
 try:
     from learning_to_adapt.envs.normalized_env import normalize
     from learning_to_adapt.envs import *
+    print("Mujoco environments imported")
 except:
     print("Unable to load mujoco based environments")
 try:
