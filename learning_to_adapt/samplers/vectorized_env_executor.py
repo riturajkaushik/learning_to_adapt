@@ -14,6 +14,7 @@ class IterativeEnvExecutor(object):
     def __init__(self, env, num_rollouts, max_path_length):
         self._num_envs = num_rollouts
         # self.envs = np.asarray([copy.deepcopy(env) for _ in range(self._num_envs)])
+        ss = env.clone()
         self.envs = np.asarray([env.clone() for _ in range(self._num_envs)])
         self.ts = np.zeros(len(self.envs), dtype='int')  # time steps
         self.max_path_length = max_path_length
@@ -87,7 +88,7 @@ class ParallelEnvExecutor(object):
         seeds = np.random.choice(range(10**6), size=n_parallel, replace=False)
 
         self.ps = [
-            Process(target=worker, args=(work_remote, remote, pickle.dumps(env), self.envs_per_proc, max_path_length, seed))
+            Process(target=worker, args=(work_remote, remote, pickle.dumps(env.clone()), self.envs_per_proc, max_path_length, seed))
             for (work_remote, remote, seed) in zip(self.work_remotes, self.remotes, seeds)]  # Why pass work remotes?
 
         for p in self.ps:
