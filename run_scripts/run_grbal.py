@@ -85,10 +85,10 @@ if __name__ == '__main__':
     config = {
                 # Environment
                 'env': HexapodEnv,
-                'max_path_length': 1000,
-                'task': None,
-                'normalize': True,
-                 'n_itr': 50,
+                'max_path_length': 50,
+                'task': ['blocked_leg', 'friction'],
+                'normalize': False,
+                'n_itr': 100,
                 'discount': 1.,
 
                 # Policy
