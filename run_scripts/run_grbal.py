@@ -87,7 +87,7 @@ if __name__ == '__main__':
                 'env': HexapodEnv,
                 'max_path_length': 50,
                 'task': ['blocked_leg', 'friction'],
-                'normalize': False,
+                'normalize': True,
                 'n_itr': 100,
                 'discount': 1.,
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
                 'num_cem_iters': 5,
 
                 # Training
-                'num_rollouts': 5,
+                'num_rollouts': 3,
                 'valid_split_ratio': 0.1,
                 'rolling_average_persitency': 0.99,
                 'initial_random_samples': True,
@@ -113,7 +113,7 @@ if __name__ == '__main__':
                 'adapt_batch_size': 16,
 
                 #  Other
-                'n_parallel': 5,
+                'n_parallel': 3,
 
     }
 
