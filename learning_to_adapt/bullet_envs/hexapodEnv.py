@@ -4,6 +4,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import copy
 from  learning_to_adapt.bullet_envs.bullet_simu.hexapod_simu import Hexapod_env, HexaController 
+from learning_to_adapt.logger import logger
 
 class HexapodEnv(gym.Env): 
     def __init__(self, goal=np.array([-4, 2.3]), task=None, reset_every_episode=False, gui=False,  visualizationSpeed= 3.0):
@@ -27,9 +28,7 @@ class HexapodEnv(gym.Env):
         return np.array([cm[0], cm[1], np.sin(ang), np.cos(ang)])
     
     def step(self, action):
-        # print ("\nApplied: ", action.tolist())
         self.ctlr.setParams(action)
-        print("Controller set")
         self.simu.run(self.sim_time)
         self.state = self.__get_state()
         diff = (self.state[0]-self.goal[0])**2 +  (self.state[1]-self.goal[1])**2 
@@ -63,6 +62,16 @@ class HexapodEnv(gym.Env):
 
     def __init(self):
         self.simu.init() 
+    
+    def log_diagnostics(self, paths, prefix):
+        progs = [
+            path["observations"][-1][-3] - path["observations"][0][-3]
+            for path in paths
+            ]
+        logger.logkv(prefix + 'AverageForwardProgress', np.mean(progs))
+        logger.logkv(prefix + 'MaxForwardProgress', np.max(progs))
+        logger.logkv(prefix + 'MinForwardProgress', np.min(progs))
+        logger.logkv(prefix + 'StdForwardProgress', np.std(progs))
     
     def clone(self):
         if not self.simu.gui:

@@ -1,2 +1,2 @@
 from .hexapodEnv import HexapodEnv
-print("Hexapod imported")
+# print("Hexapod imported")
