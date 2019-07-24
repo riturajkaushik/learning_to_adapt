@@ -76,18 +76,14 @@ class HexapodEnv(gym.Env):
         self.reset()
 
     def reset_task(self, value=None):
-        # if 'blocked_leg' in self.task:
-        #     self.disable_leg = [np.random.randint(0,6)]
-        #     print("Disabled legs: ", self.disable_leg)
+        if 'blocked_leg' in self.task:
+            self.disable_leg = [np.random.randint(0,6)]
+            print("Disabled legs: ", self.disable_leg)
         
-        # if 'friction' in self.task:
-        #     self.friction = np.random.choice([0.6, 1.0, 5.0])
-        #     self.simu.setFriction(self.friction)
-        #     print("Friction: ", self.friction)
-        pass
-
-    def __init(self):
-        self.simu.init() 
+        if 'friction' in self.task:
+            self.friction = np.random.choice([0.6, 1.0, 5.0])
+            self.simu.setFriction(self.friction)
+            print("Friction: ", self.friction)
     
     def log_diagnostics(self, paths, prefix):
         progs = [
@@ -102,7 +98,7 @@ class HexapodEnv(gym.Env):
     def clone(self):
         if not self.simu.gui:
             env = copy.deepcopy(self)
-            env.__init()
+            env.simu.init()
         else:
             raise Exception('Environment cannot be cloned if GUI enabled')
         return env
