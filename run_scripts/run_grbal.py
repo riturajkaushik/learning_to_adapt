@@ -85,9 +85,9 @@ if __name__ == '__main__':
     config = {
                 # Environment
                 'env': HexapodEnv,
-                'max_path_length': 50,
+                'max_path_length': 20,
                 'task': ['blocked_leg', 'friction'],
-                'normalize': True,
+                'normalize': False,
                 'n_itr': 100,
                 'discount': 1.,
 
@@ -98,23 +98,22 @@ if __name__ == '__main__':
                 'num_cem_iters': 5,
 
                 # Training
-                'num_rollouts': 3,
+                'num_rollouts': 5,
                 'valid_split_ratio': 0.1,
                 'rolling_average_persitency': 0.99,
                 'initial_random_samples': True,
 
                 # Dynamics Model
-                'meta_batch_size': 10,
+                'meta_batch_size': 7,
                 'hidden_nonlinearity_model': 'relu',
                 'learning_rate': 1e-3,
                 'inner_learning_rate': 0.001,
                 'hidden_sizes_model': (512, 512, 512),
                 'dynamic_model_epochs': 100,
-                'adapt_batch_size': 16,
+                'adapt_batch_size': 7,
 
                 #  Other
-                'n_parallel': 3,
-
+                'n_parallel': 5,
     }
 
     run_experiment(config)
