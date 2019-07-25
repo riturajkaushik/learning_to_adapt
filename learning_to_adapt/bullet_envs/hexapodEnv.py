@@ -62,9 +62,9 @@ class HexapodEnv(gym.Env):
         rew = -diff
         return rew
 
-    def reset(self):
+    def reset(self, task=None):
         self.simu.reset()
-        self.reset_task()
+        self.reset_task(value=task)
         self.state = self.__get_state()
         return self.state
  
@@ -76,14 +76,21 @@ class HexapodEnv(gym.Env):
         self.reset()
 
     def reset_task(self, value=None):
-        if 'blocked_leg' in self.task:
-            self.disable_leg = [np.random.randint(0,6)]
+        if value is not None:
+            assert len(value) == 2, "Must provide the legs to be blocked and the floor friction"  
+            self.disable_leg = value[0]
+            self.friction = value[1]
             print("Disabled legs: ", self.disable_leg)
-        
-        if 'friction' in self.task:
-            self.friction = np.random.choice([0.6, 1.0, 5.0])
-            self.simu.setFriction(self.friction)
             print("Friction: ", self.friction)
+        else:
+            if 'blocked_leg' in self.task:
+                self.disable_leg = [np.random.randint(0,6)]
+                print("Disabled legs: ", self.disable_leg)
+            
+            if 'friction' in self.task:
+                self.friction = np.random.choice([0.6, 1.0, 5.0])
+                self.simu.setFriction(self.friction)
+                print("Friction: ", self.friction)
     
     def log_diagnostics(self, paths, prefix):
         progs = [

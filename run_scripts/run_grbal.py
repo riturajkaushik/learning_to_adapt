@@ -76,7 +76,7 @@ def run_experiment(config):
         initial_random_samples=config['initial_random_samples'],
         dynamics_model_max_epochs=config['dynamic_model_epochs'],
     )
-    algo.train()
+    algo.train(config['test_task'], config['test_iters'])
 
 
 if __name__ == '__main__':
@@ -88,7 +88,7 @@ if __name__ == '__main__':
                 'max_path_length': 20,
                 'task': ['blocked_leg', 'friction'],
                 'normalize': False,
-                'n_itr': 100,
+                'n_itr': 120,
                 'discount': 1.,
 
                 # Policy
@@ -114,6 +114,10 @@ if __name__ == '__main__':
 
                 #  Other
                 'n_parallel': 5,
+
+                #Extra for baseline
+                'test_task':[[3], 0], #After 'test_iters' iters are over, env will be fixed to this task
+                'test_iters':20, # < 'n_itr'
     }
 
     run_experiment(config)

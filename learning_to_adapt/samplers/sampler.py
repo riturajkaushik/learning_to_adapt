@@ -41,7 +41,7 @@ class Sampler(BaseSampler):
     def update_tasks(self):
         pass
 
-    def obtain_samples(self, log=False, log_prefix='', random=False):
+    def obtain_samples(self, log=False, log_prefix='', random=False, task=None):
         """
         Collect batch_size trajectories from each task
 
@@ -68,7 +68,7 @@ class Sampler(BaseSampler):
         policy.reset(dones=[True] * self.vec_env.num_envs)
 
         # initial reset of meta_envs
-        obses = np.asarray(self.vec_env.reset())
+        obses = np.asarray(self.vec_env.reset(task=task))
 
         while n_samples < self.total_samples:
 

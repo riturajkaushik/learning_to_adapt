@@ -49,14 +49,14 @@ class IterativeEnvExecutor(object):
 
         return obs, rewards, dones, env_infos
 
-    def reset(self):
+    def reset(self, task=None):
         """
         Resets the environments
 
         Returns:
             (list): list of (np.ndarray) with the new initial observations.
         """
-        obses = [env.reset() for env in self.envs]
+        obses = [env.reset(task=task) for env in self.envs]
         self.ts[:] = 0
         return obses
 
@@ -124,7 +124,7 @@ class ParallelEnvExecutor(object):
 
         return obs, rewards, dones, env_infos
 
-    def reset(self):
+    def reset(self, task=None):
         """
         Resets the environments of each worker
 
@@ -132,7 +132,7 @@ class ParallelEnvExecutor(object):
             (list): list of (np.ndarray) with the new initial observations.
         """
         for remote in self.remotes:
-            remote.send(('reset', None))
+            remote.send(('reset', task))
         return sum([remote.recv() for remote in self.remotes], [])
 
     def set_tasks(self, tasks=None):
@@ -196,7 +196,7 @@ def worker(remote, parent_remote, env_pickle, n_envs, max_path_length, seed):
 
         # reset all the environments of the worker
         elif cmd == 'reset':
-            obs = [env.reset() for env in envs]
+            obs = [env.reset(task=data) for env in envs]
             ts[:] = 0
             remote.send(obs)
 

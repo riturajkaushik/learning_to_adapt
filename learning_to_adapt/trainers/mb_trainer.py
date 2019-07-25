@@ -47,7 +47,7 @@ class Trainer(object):
             sess = tf.Session()
         self.sess = sess
 
-    def train(self):
+    def train(self, test_task, test_iters):
         """
         Collects data and trains the dynamics model
         """
@@ -67,12 +67,16 @@ class Trainer(object):
 
                 if self.initial_random_samples and itr == 0:
                     logger.log("Obtaining random samples from the environment...")
-                    env_paths = self.sampler.obtain_samples(log=True, random=True, log_prefix='')
+                    env_paths = self.sampler.obtain_samples(log=True, random=True, log_prefix='', task=None)
 
                 else:
-                    logger.log("Obtaining samples from the environment using the policy...")
-                    env_paths = self.sampler.obtain_samples(log=True, log_prefix='')
-                
+                    if itr > self.n_itr - test_iters:
+                        logger.log("Obtaining samples from the environment using the policy...(Fixed test task)")
+                        env_paths = self.sampler.obtain_samples(log=True, log_prefix='', task=test_task)
+                    else:
+                        logger.log("Obtaining samples from the environment using the policy...")
+                        env_paths = self.sampler.obtain_samples(log=True, log_prefix='', task=None)
+
                 data.append(env_paths)
                 np.save("./data/path_infomation.npy", data)
 

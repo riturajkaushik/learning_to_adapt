@@ -106,8 +106,8 @@ class NormalizedEnv(Serializable):
         self._update_reward_estimate(reward)
         return reward / (np.sqrt(self._reward_var) + 1e-8)
 
-    def reset(self):
-        obs = self._wrapped_env.reset()
+    def reset(self, task=None):
+        obs = self._wrapped_env.reset(task=task)
         if self._normalize_obs:
             return self._apply_normalize_obs(obs)
         else:
