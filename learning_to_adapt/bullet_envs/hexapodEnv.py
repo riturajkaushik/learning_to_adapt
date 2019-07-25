@@ -54,7 +54,7 @@ class HexapodEnv(gym.Env):
         self.state = self.__get_state()
         diff = (self.state[0]-self.goal[0])**2 +  (self.state[1]-self.goal[1])**2 
         rew = -diff#np.exp(-0.05*diff)
-        return self.__get_state(), rew, False, {}
+        return self.__get_state(), rew, False, {"friction":self.friction, "blocked_leg":self.disable_leg}
 
     def reward(self, obs, action, next_obs):
         self.state = self.__get_state()
