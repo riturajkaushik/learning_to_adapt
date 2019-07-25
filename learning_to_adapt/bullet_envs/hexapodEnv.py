@@ -14,7 +14,7 @@ class HexapodEnv(gym.Env):
         self.ctlr = HexaController()
         self.gui = gui
         self.vspeed = visualizationSpeed
-        self.simu = Hexapod_env(gui=self.gui, visualizationSpeed=self.vspeed)
+        self.simu = Hexapod_env(gui=self.gui, visualizationSpeed=self.vspeed, simStep=0.004, controlStep=0.01, jointControlMode="velocity")
         self.simu.setController(self.ctlr)
         self.sim_time = 3.0
         self.state = np.array([0, 0, np.sin(0), np.cos(0)])
@@ -48,11 +48,23 @@ class HexapodEnv(gym.Env):
         return np.array([cm[0], cm[1], np.sin(ang), np.cos(ang)])
     
     def step(self, action):
+        last_orientation =  self.simu.getEulerAngles()
         self.ctlr.setParams(self.disable_leg_param(action))
         self.simu.run(self.sim_time)
         self.state = self.__get_state()
         diff = (self.state[0]-self.goal[0])**2 +  (self.state[1]-self.goal[1])**2 
-        rew = -diff#np.exp(-0.05*diff)
+        rew = -diff
+        
+        # If flipped, put upright at the same location
+        if self.simu.flipped():
+            print("Flipped !! Resetting at that point")
+            simulator, _ = self.simu.get_simulator() #module object pybullet
+            start_pos = self.simu.hexapodStartPos
+            start_pos[0] = self.state[0]
+            start_pos[1] = self.state[1]
+            start_orient = simulator.getQuaternionFromEuler(np.deg2rad(last_orientation))
+            self.simu.reset(start_pos, start_orient)
+
         return self.__get_state(), rew, False, {"friction":self.friction, "blocked_leg":self.disable_legs}
 
     def reward(self, obs, action, next_obs):

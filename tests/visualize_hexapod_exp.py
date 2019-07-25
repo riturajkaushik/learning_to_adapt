@@ -9,7 +9,7 @@ def block(pp,blocks):
         pp[i*6 + 3] = 0 
     return pp
 
-env = Hexapod_env(gui=True, visualizationSpeed=5.0)
+env = Hexapod_env(gui=True, visualizationSpeed=5.0, simStep=0.004, controlStep=0.01, jointControlMode="velocity")
 ctlr = HexaController()
 sim_time = 3.0
 env.setController(ctlr)
