@@ -46,5 +46,16 @@ def visualize_paths(task):
 
     plt.show()
 
+def visualize_paths_all():
+    for task in range(len(data[0])):
+        for i in range(len(data)):     
+            episode = i
+            obs = data[episode][task]['observations'][:,0:2]
+            plt.plot([d[0] for d in obs], [d[1] for d in obs], '.-r', alpha=i/float(len(data)))
+        plt.plot([0], [0], 'ob')
+        plt.plot([-4.0], [2.3], '*b')
 
-visualize_paths(2)
+    plt.show()
+
+
+visualize_paths_all()
