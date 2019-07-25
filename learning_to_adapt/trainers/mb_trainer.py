@@ -1,7 +1,7 @@
 import tensorflow as tf
 import time
 from learning_to_adapt.logger import logger
-
+import numpy as np
 
 class Trainer(object):
     """
@@ -51,6 +51,7 @@ class Trainer(object):
         """
         Collects data and trains the dynamics model
         """
+        data = [] #array of env_paths for each episode/trial. env_paths is an array of dictionaries of path information for each environment in a particular episode.
         with self.sess.as_default() as sess:
 
             # Initialize uninitialized vars  (only initialize vars that were not loaded)
@@ -71,6 +72,9 @@ class Trainer(object):
                 else:
                     logger.log("Obtaining samples from the environment using the policy...")
                     env_paths = self.sampler.obtain_samples(log=True, log_prefix='')
+                
+                data.append(env_paths)
+                np.save("./data/path_infomation.npy", data)
 
                 logger.record_tabular('Time-EnvSampling', time.time() - time_env_sampling_start)
 
