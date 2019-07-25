@@ -48,13 +48,12 @@ class HexapodEnv(gym.Env):
         return np.array([cm[0], cm[1], np.sin(ang), np.cos(ang)])
     
     def step(self, action):
-        # self.ctlr.setParams(self.disable_leg_param(action))
-        self.ctlr.setParams(action)
+        self.ctlr.setParams(self.disable_leg_param(action))
         self.simu.run(self.sim_time)
         self.state = self.__get_state()
         diff = (self.state[0]-self.goal[0])**2 +  (self.state[1]-self.goal[1])**2 
         rew = -diff#np.exp(-0.05*diff)
-        return self.__get_state(), rew, False, {"friction":self.friction, "blocked_leg":self.disable_leg}
+        return self.__get_state(), rew, False, {"friction":self.friction, "blocked_leg":self.disable_legs}
 
     def reward(self, obs, action, next_obs):
         self.state = self.__get_state()
@@ -78,14 +77,15 @@ class HexapodEnv(gym.Env):
     def reset_task(self, value=None):
         if value is not None:
             assert len(value) == 2, "Must provide the legs to be blocked and the floor friction"  
-            self.disable_leg = value[0]
+            self.disable_legs = value[0]
             self.friction = value[1]
-            print("Disabled legs: ", self.disable_leg)
+            self.simu.setFriction(self.friction)
+            print("Disabled legs: ", self.disable_legs)
             print("Friction: ", self.friction)
         else:
             if 'blocked_leg' in self.task:
-                self.disable_leg = [np.random.randint(0,6)]
-                print("Disabled legs: ", self.disable_leg)
+                self.disable_legs = [np.random.randint(0,6)]
+                print("Disabled legs: ", self.disable_legs)
             
             if 'friction' in self.task:
                 self.friction = np.random.choice([0.6, 1.0, 5.0])
